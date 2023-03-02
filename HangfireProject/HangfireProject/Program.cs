@@ -1,5 +1,6 @@
 using Hangfire;
 using Hangfire.Storage.SQLite;
+using HangfireProject.Jobs;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -39,4 +40,19 @@ app.MapControllers();
 app.UseHangfireDashboard();
 // ========== Hangfire Dashboard ==========
 
+RegisterJobs();
+
 app.Run();
+
+static void RegisterJobs()
+{
+    BackgroundJob.Enqueue<JobsHangfire>(x => x.FireAndForget());
+    BackgroundJob.Schedule<JobsHangfire>(x => x.Delayed(), TimeSpan.FromMinutes(1));
+    BackgroundJob.Enqueue<JobsHangfire>(x => x.TimeConsumingMethod());
+
+    RecurringJob.AddOrUpdate<JobsHangfire>(
+        "Job recorrente",
+        job => job.RecurringJobMethod(),
+        Cron.Minutely,
+        TimeZoneInfo.Local);
+}
